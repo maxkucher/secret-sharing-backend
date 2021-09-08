@@ -38,7 +38,15 @@ func (app *App) postSecretHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write(response)
 		return
 	}
-	secretId := app.secretService.SaveSecret(createSecretDTO.PlainString)
+	secretId, err := app.secretService.SaveSecret(createSecretDTO.PlainString)
+	if err != nil {
+		response, _ := json.Marshal(map[string]string{
+			"error": err.Error(),
+		})
+		w.WriteHeader(500)
+		w.Write(response)
+		return
+	}
 	response := CreateSecretDTOResponse{Id: secretId}
 	responseBytes, _ := json.Marshal(response)
 	w.WriteHeader(200)
@@ -50,7 +58,23 @@ func (app *App) postSecretHandler(w http.ResponseWriter, r *http.Request) {
 func (app *App) getSecretHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
-	secret := app.secretService.LoadSecrets(id)
+	secret, err := app.secretService.LoadSecrets(id)
+	if err != nil {
+		response, _ := json.Marshal(map[string]string{
+			"error": err.Error(),
+		})
+		w.WriteHeader(500)
+		w.Write(response)
+		return
+	}
+	if secret == "" {
+		response, _ := json.Marshal(map[string]string{
+			"error": "Secret not found",
+		})
+		w.WriteHeader(404)
+		w.Write(response)
+		return
+	}
 	response := GetSecretResponse{Data: secret}
 	responseBytes, _ := json.Marshal(response)
 	w.WriteHeader(200)
