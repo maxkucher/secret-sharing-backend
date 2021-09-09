@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/maxkucher/secret-sharing-backend/app"
 	"log"
 	"net/http"
 	"os"
@@ -17,13 +18,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error initializing secrets file with an empty map %s", err)
 	}
-	secretService := FSSecretService{
+	secretService := app.FSSecretService{
 		FilePath: secretsFilePath,
 	}
-	app := App{secretService: &secretService}
+	server := app.App{SecretService: &secretService}
 	router := mux.NewRouter()
-	router.HandleFunc("/healthcheck", app.healthCheckHandler).Methods("GET", "POST")
-	router.HandleFunc("/secretHandler", app.postSecretHandler).Methods("POST")
-	router.HandleFunc("/secretHandler/{id}", app.getSecretHandler).Methods("GET")
+	router.HandleFunc("/healthcheck", server.HealthCheckHandler).Methods("GET", "POST")
+	router.HandleFunc("/secretHandler", server.PostSecretHandler).Methods("POST")
+	router.HandleFunc("/secretHandler/{id}", server.GetSecretHandler).Methods("GET")
 	http.ListenAndServe(":8080", router)
 }

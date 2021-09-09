@@ -1,34 +1,23 @@
-package main
+package app
 
 import (
 	"encoding/json"
 	"github.com/gorilla/mux"
+	"github.com/maxkucher/secret-sharing-backend/public"
 	"net/http"
 )
 
 type App struct {
-	secretService SecretService
+	SecretService SecretService
 }
 
-type CreateSecretDTO struct {
-	PlainString string `json:"plain_string"`
-}
-
-type CreateSecretDTOResponse struct {
-	Id string `json:"id"`
-}
-
-type GetSecretResponse struct {
-	Data string `json:"data"`
-}
-
-func (app *App) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
+func (app *App) HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Wow, it works!"))
 }
 
-func (app *App) postSecretHandler(w http.ResponseWriter, r *http.Request) {
+func (app *App) PostSecretHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	var createSecretDTO CreateSecretDTO
+	var createSecretDTO public.CreateSecretDTO
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&createSecretDTO); err != nil {
 		response, _ := json.Marshal(map[string]string{
@@ -38,7 +27,7 @@ func (app *App) postSecretHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write(response)
 		return
 	}
-	secretId, err := app.secretService.SaveSecret(createSecretDTO.PlainString)
+	secretId, err := app.SecretService.SaveSecret(createSecretDTO.PlainString)
 	if err != nil {
 		response, _ := json.Marshal(map[string]string{
 			"error": err.Error(),
@@ -47,7 +36,7 @@ func (app *App) postSecretHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write(response)
 		return
 	}
-	response := CreateSecretDTOResponse{Id: secretId}
+	response := public.CreateSecretDTOResponse{Id: secretId}
 	responseBytes, _ := json.Marshal(response)
 	w.WriteHeader(200)
 	w.Write(responseBytes)
@@ -55,10 +44,10 @@ func (app *App) postSecretHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (app *App) getSecretHandler(w http.ResponseWriter, r *http.Request) {
+func (app *App) GetSecretHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
-	secret, err := app.secretService.LoadSecrets(id)
+	secret, err := app.SecretService.LoadSecrets(id)
 	if err != nil {
 		response, _ := json.Marshal(map[string]string{
 			"error": err.Error(),
@@ -75,7 +64,7 @@ func (app *App) getSecretHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write(response)
 		return
 	}
-	response := GetSecretResponse{Data: secret}
+	response := public.GetSecretResponse{Data: secret}
 	responseBytes, _ := json.Marshal(response)
 	w.WriteHeader(200)
 	w.Write(responseBytes)
